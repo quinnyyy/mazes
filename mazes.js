@@ -107,6 +107,43 @@ function DFS(s) {
     return order;
 }
 
+function BFS(s) {
+    paintSquare(s.x,s.y,"#33cc33");
+    var queue = [];
+    var order = [];
+    queue.push(s);
+    while (queue.length != 0) {
+        let u = queue.shift();
+        order.push(u);
+        if (BFSgrid[u.x][u.y] == 0) {
+            BFSgrid[u.x][u.y] = 2;
+            if (u.y-1 == 0 && BFSgrid[u.x][u.y-1] == 0) {
+                order.push(new point(u.x,u.y-1));
+                break;
+            }
+
+            if (BFSgrid[u.x][u.y+1] == 0 && u.y+1 != 0) {
+                queue.push(new point(u.x,u.y+1));
+            }
+            
+            if (BFSgrid[u.x+1][u.y] == 0 && u.x+1 != 0) {
+                queue.push(new point(u.x+1,u.y));
+            }
+            
+            if (BFSgrid[u.x-1][u.y] == 0 && u.x-1 != 0) {
+                queue.push(new point(u.x-1,u.y));
+            }
+
+            if (BFSgrid[u.x][u.y-1] == 0 && u.y-1 != 0) {
+                //up
+                queue.push(new point(u.x,u.y-1));
+            }
+        }
+    }
+    return order;
+}
+
+
 function makeGrid(size) {
     grid = [];
     for (var i=0; i<size;i++) {
@@ -118,12 +155,33 @@ function makeGrid(size) {
     return grid;
 }
 
+var done = true;
 function paintOrder(order,index) {
     if(index != order.length) {
         paintSquare(order[index].x,order[index].y,"#33cc33");
         setTimeout(paintOrder,100,order,index+1);
+    } else {
+        done = true;
     }
 }
+
+var feedback = document.getElementById('feedback');
+
+var options = document.getElementsByClassName('option');
+for (let i=0; i < options.length; i++) {
+    options[i].style.cursor = 'pointer';
+    options[i].onclick = function() {
+        ctx.fillStyle = "#f2f2f2";
+        ctx.fillRect(0,0,width,height);
+        for (let j=0; j < options.length; j++) {
+            options[j].style.borderColor ="#b3ccff";
+        }
+        options[i].style.borderColor = "#ff66ff";
+        drawTree(Number(options[i].innerHTML));
+        feedback.innerHTML = "Currently " + options[i].innerHTML + " branches";
+    }
+};
+
 
 var size = 25;
 var DFSgrid = makeGrid(size);
@@ -132,7 +190,50 @@ ctx.fillRect(0,0,width,height);
 var midpt = Math.ceil(size/2) - 1;
 var start = new point(midpt,size - 1);
 
-DFSgrid = prims(midpt,size-1,DFSgrid);
 
+DFSgrid = prims(midpt,size-1,DFSgrid);
+var BFSgrid = DFSgrid;
+/*
 var DFSorder = DFS(start);
 paintOrder(DFSorder,0);
+*/
+/*
+BFSgrid = prims(midpt,size-1,DFSgrid);
+var BFSorder = BFS(start);
+paintOrder(BFSorder,0);
+*/
+
+var dfs_button = document.getElementById('DFS');
+var bfs_button = document.getElementById('BFS');
+var reset_button = document.getElementById('Reset');
+
+reset_button.onclick = function () {
+    if (done == false) {
+        alert("Wait for the search to finish");
+    }
+    if (done == true) {
+    DFSgrid = makeGrid(size);
+    ctx.fillStyle = "#000000";
+    ctx.fillRect(0,0,width,height);
+    DFSgrid = prims(midpt,size-1,DFSgrid);
+    BFSgrid = DFSgrid;
+    }
+}
+
+dfs_button.onclick = function() {
+    if (done == true) {
+    done = false;
+    DFSorder = [];
+    DFSorder = DFS(start);
+    paintOrder(DFSorder,0);
+    }
+}
+
+bfs_button.onclick = function() {
+    if (done == true) {
+    done = false;
+    BFSorder = [];
+    BFSorder = BFS(start);
+    paintOrder(BFSorder,0);
+    }
+}
