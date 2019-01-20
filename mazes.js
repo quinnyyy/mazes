@@ -15,22 +15,8 @@ function point(x_coord, y_coord) {
     this.y = y_coord;
 }
 
-grid = [];
-size = 25; //Size is 25 with 1 padding on each side. 
-
-for (var i=0; i<size; i++) {
-    let test = [];
-    test.length = size;
-    test.fill(1);
-    grid.push(test);
-}
-console.log(grid);
-
-ctx.fillStyle = "#000000";
-ctx.fillRect(0,0,width,height);
-
-var midpt = Math.ceil(size/2) - 1;
-function prims(x,y) {
+function prims(x,y,grid) {
+    grid[x][y] = 0;
     paintSquare(x,y,"#ffffff");
     var walls = [];
     walls.push(new point(x,y-1));
@@ -59,14 +45,14 @@ function prims(x,y) {
             if (grid[pt.x-1][pt.y] == 1 && pt.x-1 != 0) {
                 walls.push(new point(pt.x-1,pt.y));
             }
-            if (grid[pt.x+1][pt.y] == 1 && pt.x+1 != 24) {
-                walls.push(new point(pt.x+1,pt.y));
+            if (grid[pt.x][pt.y+1] == 1 && pt.y+1 != 24) {
+                walls.push(new point(pt.x,pt.y+1));
             }
             if (grid[pt.x][pt.y-1] == 1 && pt.y-1 != 0) {
                 walls.push(new point(pt.x,pt.y-1));
             }
-            if (grid[pt.x][pt.y+1] == 1 && pt.y+1 != 24) {
-                walls.push(new point(pt.x,pt.y+1));
+            if (grid[pt.x+1][pt.y] == 1 && pt.x+1 != 24) {
+                walls.push(new point(pt.x+1,pt.y));
             }
         }
         walls.splice(index,1);
@@ -77,8 +63,76 @@ function prims(x,y) {
             top.push(i);
         }
     }
-    grid[top[Math.floor(Math.random()*top.length)]][0] = 0;
-    paintSquare(top[Math.floor(Math.random()*top.length)],0);
+    let topIndex = Math.floor(Math.random()*top.length);
+    grid[top[topIndex]][0] = 0;
+    paintSquare(top[topIndex],0,"#ffffff");
+    return grid;
 }
 
-prims(midpt,size-1);
+function DFS(s) {
+    paintSquare(s.x,s.y,"#33cc33");
+    var stack = [];
+    var order = [];
+    stack.push(s);
+    while (stack.length != 0) {
+        let u = stack.pop();
+        order.push(u);
+        if (DFSgrid[u.x][u.y] == 0) {
+            DFSgrid[u.x][u.y] = 2;
+            if (u.y-1 == 0 && DFSgrid[u.x][u.y-1] == 0) {
+                order.push(new point(u.x,u.y-1));
+                break;
+            }
+
+            if (DFSgrid[u.x][u.y+1] == 0 && u.y+1 != 0) {
+                stack.push(new point(u.x,u.y+1));
+            }
+            
+            if (DFSgrid[u.x+1][u.y] == 0 && u.x+1 != 0) {
+                stack.push(new point(u.x+1,u.y));
+            }
+            
+            if (DFSgrid[u.x-1][u.y] == 0 && u.x-1 != 0) {
+                stack.push(new point(u.x-1,u.y));
+            }
+
+            if (DFSgrid[u.x][u.y-1] == 0 && u.y-1 != 0) {
+                //up
+                stack.push(new point(u.x,u.y-1));
+            }
+            
+            
+        }
+    }
+    return order;
+}
+
+function makeGrid(size) {
+    grid = [];
+    for (var i=0; i<size;i++) {
+        let test=[];
+        test.length = size;
+        test.fill(1);
+        grid.push(test);
+    }
+    return grid;
+}
+
+function paintOrder(order,index) {
+    if(index != order.length) {
+        paintSquare(order[index].x,order[index].y,"#33cc33");
+        setTimeout(paintOrder,100,order,index+1);
+    }
+}
+
+var size = 25;
+var DFSgrid = makeGrid(size);
+ctx.fillStyle = "#000000";
+ctx.fillRect(0,0,width,height);
+var midpt = Math.ceil(size/2) - 1;
+var start = new point(midpt,size - 1);
+
+DFSgrid = prims(midpt,size-1,DFSgrid);
+
+var DFSorder = DFS(start);
+paintOrder(DFSorder,0);
